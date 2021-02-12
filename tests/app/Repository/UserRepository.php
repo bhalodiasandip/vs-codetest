@@ -55,6 +55,10 @@ class UserRepository extends BaseRepository
 
 
         if (!$id || $id && $request['password']) $model->password = bcrypt($request['password']);
+
+        // Comment by: sandip
+        // use sync instead of attach & detach.
+
         $model->detachAllRoles();
         $model->save();
         $model->attachRole($request['role']);
@@ -185,9 +189,13 @@ class UserRepository extends BaseRepository
 
         $townidUpdated = [];
         if ($request['user_towns_projects']) {
+            // Comment by: sandip
+            // Use Eloquent delete instead of query builder
             $del = DB::table('user_towns')->where('user_id', '=', $model->id)->delete();
             foreach ($request['user_towns_projects'] as $townId) {
                 $userTown = new UserTowns();
+                // Comment by: sandip
+                // should not use $userTown::townExist under foreach loop. it will call query as many time as total records
                 $already_exit = $userTown::townExist($model->id, $townId);
                 if ($already_exit == 0) {
                     $userTown->user_id = $model->id;
@@ -213,6 +221,8 @@ class UserRepository extends BaseRepository
 
     public function enable($id)
     {
+        // Comment by: sandip
+        // use Eloquent update instead
         $user = User::findOrFail($id);
         $user->status = '1';
         $user->save();
@@ -221,6 +231,8 @@ class UserRepository extends BaseRepository
 
     public function disable($id)
     {
+        // Comment by: sandip
+        // use Eloquent update instead
         $user = User::findOrFail($id);
         $user->status = '0';
         $user->save();

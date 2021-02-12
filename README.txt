@@ -1,3 +1,17 @@
+Comments by sandip about code
+===========================
+1) I will give 3 out of 5 to code.
+
+2) Major drawback of the code I have found is it is using Database operation in foreach loop in many place.
+this will result slow execution time of query. It try to run query as many time as total records in foreach loop.
+We can achieve same results in minimum query and execution time using proper joining and multi dimentional array use.
+
+3) Good thing about code that most of the codes achieved through laravel concepts
+like repository pattern, events, notification etc..
+
+=================================
+
+
 Choose ONE of the following tasks.
 Please do not invest more than 2-4 hours on this.
 Upload your results to a Github repo, for easier sharing and reviewing.

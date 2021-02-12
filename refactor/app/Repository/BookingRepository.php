@@ -77,6 +77,12 @@ class BookingRepository extends BaseRepository
                     $noramlJobs[] = $jobitem;
                 }
             }
+
+            // Comment by: sandip
+            // Here Job::checkParticularJob this function seems Model class function but it iterate
+            // through loop. so function call will as many time as total $noramlJobs records. Instead of
+            // it we should achieve it though join and array operation.
+
             $noramlJobs = collect($noramlJobs)->each(function ($item, $key) use ($user_id) {
                 $item['usercheck'] = Job::checkParticularJob($user_id, $item);
             })->sortBy('due')->all();
@@ -286,6 +292,10 @@ class BookingRepository extends BaseRepository
     public function storeJobEmail($data)
     {
         $user_type = $data['user_type'];
+        // Comment by: sandip
+        // should not use @ before variable because it will allow next execution even after errors.
+        // this will generate major issue in business logic.
+
         $job = Job::findOrFail(@$data['user_email_job_id']);
         $job->user_email = @$data['user_email'];
         $job->reference = isset($data['reference']) ? $data['reference'] : '';
@@ -463,6 +473,9 @@ class BookingRepository extends BaseRepository
         {
             $job = Job::find($v->id);
             $jobuserid = $job->user_id;
+            // Comment by: sandip
+            //Below Job::checkTowns function call in foreach loop. so there are query in loop. it will
+            // slow down execution process. should achieve through join & multi dimentional array logic
             $checktown = Job::checkTowns($jobuserid, $user_id);
             if (($job->customer_phone_type == 'no' || $job->customer_phone_type == '') && $job->customer_physical_type == 'yes' && $checktown == false) {
                 unset($job_ids[$k]);
@@ -492,8 +505,14 @@ class BookingRepository extends BaseRepository
                 foreach ($jobs as $oneJob) {
                     if ($job->id == $oneJob->id) { // one potential job is the same with current job
                         $userId = $oneUser->id;
+                        // Comment by: sandip
+                        //Below Job::assignedToPaticularTranslator function call in foreach loop. so there are query in loop. it will
+                        // slow down execution process. should achieve through join & multi dimentional array logic
                         $job_for_translator = Job::assignedToPaticularTranslator($userId, $oneJob->id);
                         if ($job_for_translator == 'SpecificJob') {
+                            // Comment by: sandip
+                            //Below Job::checkParticularJob function call in foreach loop. so there are query in loop. it will
+                            // slow down execution process. should achieve through join & multi dimentional array logic
                             $job_checker = Job::checkParticularJob($userId, $oneJob);
                             if (($job_checker != 'userCanNotAcceptJob')) {
                                 if ($this->isNeedToDelayPush($oneUser->id)) {
@@ -1022,6 +1041,9 @@ class BookingRepository extends BaseRepository
         $data = array();
         $data['notification_type'] = 'session_start_remind';
         $due_explode = explode(' ', $due);
+        // Comment by: sandip
+        //Should use language file instead of static message from here.
+
         if ($job->customer_physical_type == 'yes')
             $msg_text = array(
                 "en" => 'Detta är en påminnelse om att du har en ' . $language . 'tolkning (på plats i ' . $job->town . ') kl ' . $due_explode[1] . ' på ' . $due_explode[0] . ' som vara i ' . $duration . ' min. Lycka till och kom ihåg att ge feedback efter utförd tolkning!'
@@ -1214,6 +1236,9 @@ class BookingRepository extends BaseRepository
             $email = $user->email;
         }
         $name = $user->name;
+        // Comment by: sandip
+        // should use Language file for below $subject
+
         $subject = 'Meddelande om ändring av tolkbokning för uppdrag # ' . $job->id . '';
         $data = [
             'user'     => $user,
@@ -1245,6 +1270,9 @@ class BookingRepository extends BaseRepository
             $email = $user->email;
         }
         $name = $user->name;
+        // Comment by: sandip
+        // should use Language file for below $subject
+
         $subject = 'Meddelande om ändring av tolkbokning för uppdrag # ' . $job->id . '';
         $data = [
             'user'     => $user,
@@ -1266,6 +1294,10 @@ class BookingRepository extends BaseRepository
         $data = array();
         $data['notification_type'] = 'job_expired';
         $language = TeHelper::fetchLanguageFromJobId($job->from_language_id);
+
+        // Comment by: sandip
+        // should use language file for $msg_text
+
         $msg_text = array(
             "en" => 'Tyvärr har ingen tolk accepterat er bokning: (' . $language . ', ' . $job->duration . 'min, ' . $job->due . '). Vänligen pröva boka om tiden.'
         );
@@ -1338,6 +1370,8 @@ class BookingRepository extends BaseRepository
         $data = array();
         $data['notification_type'] = 'session_start_remind';
         if ($job->customer_physical_type == 'yes')
+            // Comment by: sandip
+            // should use language file
             $msg_text = array(
                 "en" => 'Du har nu fått platstolkningen för ' . $language . ' kl ' . $duration . ' den ' . $due . '. Vänligen säkerställ att du är förberedd för den tiden. Tack!'
             );
@@ -1359,6 +1393,8 @@ class BookingRepository extends BaseRepository
      */
     private function getUserTagsStringFromArray($users)
     {
+        // Comment by: sandip
+        // should use json_encode
         $user_tags = "[";
         $first = true;
         foreach ($users as $oneUser) {
@@ -1396,10 +1432,14 @@ class BookingRepository extends BaseRepository
                 if (!empty($job->user_email)) {
                     $email = $job->user_email;
                     $name = $user->name;
+                    // Comment by: sandip
+                    //should use language file
                     $subject = 'Bekräftelse - tolk har accepterat er bokning (bokning # ' . $job->id . ')';
                 } else {
                     $email = $user->email;
                     $name = $user->name;
+                    // Comment by: sandip
+                    //should use language file
                     $subject = 'Bekräftelse - tolk har accepterat er bokning (bokning # ' . $job->id . ')';
                 }
                 $data = [
@@ -1447,6 +1487,8 @@ class BookingRepository extends BaseRepository
                     $email = $user->email;
                     $name = $user->name;
                 }
+                // Comment by: sandip
+                // should use language file
                 $subject = 'Bekräftelse - tolk har accepterat er bokning (bokning # ' . $job->id . ')';
                 $data = [
                     'user' => $user,
@@ -1576,6 +1618,9 @@ class BookingRepository extends BaseRepository
         $job_ids = Job::getJobs($cuser->id, $job_type, 'pending', $userlanguage, $gender, $translator_level);
         foreach ($job_ids as $k => $job) {
             $jobuserid = $job->user_id;
+            // Comment by: sandip
+            // Should not use query in foreach loop. Below Job::assignedToPaticularTranslator and
+            // Job::checkParticularJob and Job::checkTowns will call mysql query in foreach loop.
             $job->specific_job = Job::assignedToPaticularTranslator($cuser->id, $job->id);
             $job->check_particular_job = Job::checkParticularJob($cuser->id, $job);
             $checktown = Job::checkTowns($jobuserid, $cuser->id);
@@ -1903,6 +1948,9 @@ class BookingRepository extends BaseRepository
 
         $languages = Language::where('active', '1')->orderBy('language')->get();
         $requestdata = Request::all();
+        // Comment by: sandip
+        // Should not use query builder. use Eloquent model instead. also can achieve in single query.
+        // and multi dimentional array concepts.
         $all_customers = DB::table('users')->where('user_type', '1')->lists('email');
         $all_translators = DB::table('users')->where('user_type', '2')->lists('email');
 
@@ -1924,6 +1972,8 @@ class BookingRepository extends BaseRepository
                 /*$allJobs->where('jobs.status', '=', $requestdata['status']);*/
             }
             if (isset($requestdata['customer_email']) && $requestdata['customer_email'] != '') {
+                // Comment by: sandip
+                // Should achive through eloquent instead of query builder
                 $user = DB::table('users')->where('email', $requestdata['customer_email'])->first();
                 if ($user) {
                     $allJobs->where('jobs.user_id', '=', $user->id)
@@ -1990,6 +2040,8 @@ class BookingRepository extends BaseRepository
     {
         $languages = Language::where('active', '1')->orderBy('language')->get();
         $requestdata = Request::all();
+        // Comment by: sandip
+        // Use common function of fetch all_customers and all_translators because it is using multiple places.
         $all_customers = DB::table('users')->where('user_type', '1')->lists('email');
         $all_translators = DB::table('users')->where('user_type', '2')->lists('email');
 
@@ -2096,6 +2148,8 @@ class BookingRepository extends BaseRepository
 
     public function ignoreExpired($id)
     {
+        // Comment by: sandip
+        // use eloquent update method instead of retrieve and save record.
         $job = Job::find($id);
         $job->ignore_expired = 1;
         $job->save();
@@ -2104,6 +2158,8 @@ class BookingRepository extends BaseRepository
 
     public function ignoreThrottle($id)
     {
+        // Comment by: sandip
+        // use eloquent update method instead of retrieve and save record.
         $throttle = Throttles::find($id);
         $throttle->ignore = 1;
         $throttle->save();
